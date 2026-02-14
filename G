@@ -1,0 +1,188 @@
+--== AnexedUI Library by Ghost ==--
+
+local AnexedUI = {}
+AnexedUI.__index = AnexedUI
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+function AnexedUI:CreateWindow(title)
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+    ScreenGui.Name = "AnexedUI"
+    
+    local Main = Instance.new("Frame", ScreenGui)
+    Main.Size = UDim2.new(0, 500, 0, 320)
+    Main.Position = UDim2.new(0.5, -250, 0.5, -160)
+    Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Main.BorderSizePixel = 0
+    Main.Active = true
+    Main.Draggable = true
+    
+    local UICorner = Instance.new("UICorner", Main)
+    UICorner.CornerRadius = UDim.new(0, 8)
+    
+    local TopBar = Instance.new("Frame", Main)
+    TopBar.Size = UDim2.new(1, 0, 0, 32)
+    TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+    
+    local Title = Instance.new("TextLabel", TopBar)
+    Title.Text = title or "Anexed UI"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 14
+    Title.BackgroundTransparency = 1
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.Size = UDim2.new(1, -40, 1, 0)
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local Close = Instance.new("TextButton", TopBar)
+    Close.Text = "×"
+    Close.Size = UDim2.new(0, 30, 1, 0)
+    Close.Position = UDim2.new(1, -30, 0, 0)
+    Close.BackgroundTransparency = 1
+    Close.TextColor3 = Color3.fromRGB(255, 100, 100)
+    Close.TextSize = 22
+    
+    Close.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+    
+    local TabHolder = Instance.new("Frame", Main)
+    TabHolder.Position = UDim2.new(0, 0, 0, 32)
+    TabHolder.Size = UDim2.new(0, 120, 1, -32)
+    TabHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    
+    local TabContent = Instance.new("Frame", Main)
+    TabContent.Position = UDim2.new(0, 120, 0, 32)
+    TabContent.Size = UDim2.new(1, -120, 1, -32)
+    TabContent.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    
+    local UIList = Instance.new("UIListLayout", TabHolder)
+    UIList.Padding = UDim.new(0, 4)
+    
+    local Tabs = {}
+    
+    function Tabs:CreateTab(name)
+        local Button = Instance.new("TextButton", TabHolder)
+        Button.Text = name
+        Button.Size = UDim2.new(1, -8, 0, 28)
+        Button.Position = UDim2.new(0, 4, 0, 4)
+        Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.Font = Enum.Font.GothamBold
+        Button.TextSize = 13
+        Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+        
+        local Page = Instance.new("ScrollingFrame", TabContent)
+        Page.Size = UDim2.new(1, -10, 1, -10)
+        Page.Position = UDim2.new(0, 5, 0, 5)
+        Page.BackgroundTransparency = 1
+        Page.Visible = false
+        Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+        Page.ScrollBarThickness = 3
+        
+        local PageLayout = Instance.new("UIListLayout", Page)
+        PageLayout.Padding = UDim.new(0, 6)
+        
+        Button.MouseButton1Click:Connect(function()
+            for _, v in pairs(TabContent:GetChildren()) do
+                if v:IsA("ScrollingFrame") then
+                    v.Visible = false
+                end
+            end
+            Page.Visible = true
+        end)
+        
+        local Elements = {}
+        
+        function Elements:AddButton(text, callback)
+            local Btn = Instance.new("TextButton", Page)
+            Btn.Size = UDim2.new(1, -10, 0, 30)
+            Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Btn.Text = text
+            Btn.Font = Enum.Font.Gotham
+            Btn.TextSize = 13
+            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+            
+            Btn.MouseButton1Click:Connect(function()
+                pcall(callback)
+            end)
+        end
+        
+        function Elements:AddLabel(text)
+            local Label = Instance.new("TextLabel", Page)
+            Label.Size = UDim2.new(1, -10, 0, 26)
+            Label.BackgroundTransparency = 1
+            Label.Text = text
+            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 12
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+        end
+        
+        function Elements:AddToggle(text, callback)
+            local Toggle = Instance.new("TextButton", Page)
+            Toggle.Size = UDim2.new(1, -10, 0, 30)
+            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Toggle.Font = Enum.Font.Gotham
+            Toggle.TextSize = 13
+            Toggle.Text = text.." [OFF]"
+            Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
+            
+            local state = false
+            Toggle.MouseButton1Click:Connect(function()
+                state = not state
+                Toggle.Text = text.." ["..(state and "ON" or "OFF").."]"
+                pcall(callback, state)
+            end)
+        end
+        
+        function Elements:AddTextbox(placeholder, callback)
+            local Box = Instance.new("TextBox", Page)
+            Box.Size = UDim2.new(1, -10, 0, 30)
+            Box.PlaceholderText = placeholder
+            Box.Text = ""
+            Box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Box.Font = Enum.Font.Gotham
+            Box.TextSize = 12
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+            
+            Box.FocusLost:Connect(function(enter)
+                if enter then
+                    pcall(callback, Box.Text)
+                end
+            end)
+        end
+        
+        Page.Visible = #TabContent:GetChildren() == 1
+        return Elements
+    end
+    
+    return Tabs
+end
+
+function AnexedUI:Notify(text, duration)
+    duration = duration or 2
+    local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local Notif = Instance.new("TextLabel", PlayerGui)
+    Notif.Size = UDim2.new(0, 200, 0, 40)
+    Notif.Position = UDim2.new(0.5, -100, 0.9, 0)
+    Notif.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Notif.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Notif.Font = Enum.Font.GothamBold
+    Notif.TextSize = 14
+    Notif.Text = text
+    Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 8)
+    
+    TweenService:Create(Notif, TweenInfo.new(0.3), {Position = UDim2.new(0.5, -100, 0.85, 0)}):Play()
+    task.wait(duration)
+    TweenService:Create(Notif, TweenInfo.new(0.3), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+    task.wait(0.3)
+    Notif:Destroy()
+end
+
+return AnexedUI
