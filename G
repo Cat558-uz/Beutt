@@ -426,12 +426,10 @@ function GhostUI:CreateWindow(title)
 			Page.Visible = true
 		end)
 
-		-- return API bound to this Page
-		local pageAPI = injectElementAPIs(Page)
-		-- ensure first tab defaults visible when created
-		if #TabContent:GetChildren() == 0 then
-			Page.Visible = true
-		end
+		Page.Parent = TabContent
+         if #TabContent:GetChildren() == 1 then
+            Page.Visible = true
+        end
 
 		return pageAPI
 	end
