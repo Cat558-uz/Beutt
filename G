@@ -1,4 +1,5 @@
---== Ghost UI Library v2 (Base Redzhubui/BeuttUI) ==--
+--== Ghost UI Library v3 ==--
+-- Feita por Ghost | Design estilo Redzhubui/BeuttUI refinado --
 
 local GhostUI = {}
 GhostUI.__index = GhostUI
@@ -6,196 +7,281 @@ GhostUI.__index = GhostUI
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+--== Função de arrastar qualquer objeto ==--
+local function makeDraggable(obj)
+	local dragging, dragInput, dragStart, startPos
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = obj.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	obj.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+
 function GhostUI:CreateWindow(title)
-    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-    ScreenGui.Name = "GhostUI"
-    
-    --== Botão flutuante de abrir ==--
-    local OpenButton = Instance.new("ImageButton", ScreenGui)
-    OpenButton.Name = "OpenBtn"
-    OpenButton.Image = "rbxassetid://6031280882" -- ícone de engrenagem
-    OpenButton.Size = UDim2.new(0, 45, 0, 45)
-    OpenButton.Position = UDim2.new(0, 20, 0.8, 0)
-    OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    OpenButton.BorderSizePixel = 0
-    Instance.new("UICorner", OpenButton).CornerRadius = UDim.new(1, 0)
-    
-    --== Janela principal ==--
-    local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 520, 0, 340)
-    Main.Position = UDim2.new(0.5, -260, 0.5, -170)
-    Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    Main.BorderSizePixel = 0
-    Main.Visible = false
-    Main.Active = true
-    Main.Draggable = true
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-    
-    local TopBar = Instance.new("Frame", Main)
-    TopBar.Size = UDim2.new(1, 0, 0, 32)
-    TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
-    
-    local Title = Instance.new("TextLabel", TopBar)
-    Title.Text = title or "Ghost UI"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 14
-    Title.BackgroundTransparency = 1
-    Title.Position = UDim2.new(0, 10, 0, 0)
-    Title.Size = UDim2.new(1, -20, 1, 0)
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local TabHolder = Instance.new("Frame", Main)
-    TabHolder.Position = UDim2.new(0, 0, 0, 32)
-    TabHolder.Size = UDim2.new(0, 130, 1, -32)
-    TabHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    
-    local TabContent = Instance.new("Frame", Main)
-    TabContent.Position = UDim2.new(0, 130, 0, 32)
-    TabContent.Size = UDim2.new(1, -130, 1, -32)
-    TabContent.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    
-    local UIList = Instance.new("UIListLayout", TabHolder)
-    UIList.Padding = UDim.new(0, 5)
-    UIList.FillDirection = Enum.FillDirection.Vertical
-    UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    
-    local Tabs = {}
-    
-    --== Animação botão abrir ==--
-    local opened = false
-    OpenButton.MouseButton1Click:Connect(function()
-        opened = not opened
-        TweenService:Create(OpenButton, TweenInfo.new(0.2), {Rotation = opened and 90 or 0}):Play()
-        TweenService:Create(Main, TweenInfo.new(0.25), {BackgroundTransparency = opened and 0 or 1}):Play()
-        Main.Visible = opened
-    end)
-    
-    --== Função criar aba ==--
-    function Tabs:CreateTab(name)
-        local Button = Instance.new("TextButton", TabHolder)
-        Button.Text = name
-        Button.Size = UDim2.new(1, -10, 0, 30)
-        Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Button.Font = Enum.Font.GothamBold
-        Button.TextSize = 13
-        Button.AutoButtonColor = false
-        Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
-        
-        local Page = Instance.new("ScrollingFrame", TabContent)
-        Page.Size = UDim2.new(1, -10, 1, -10)
-        Page.Position = UDim2.new(0, 5, 0, 5)
-        Page.BackgroundTransparency = 1
-        Page.Visible = false
-        Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-        Page.ScrollBarThickness = 4
-        
-        local PageLayout = Instance.new("UIListLayout", Page)
-        PageLayout.Padding = UDim.new(0, 6)
-        
-        Button.MouseButton1Click:Connect(function()
-            for _, v in pairs(TabContent:GetChildren()) do
-                if v:IsA("ScrollingFrame") then
-                    v.Visible = false
-                end
-            end
-            Page.Visible = true
-            
-            TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
-            task.wait(0.1)
-            TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}):Play()
-        end)
-        
-        local Elements = {}
-        
-        --== Botão ==--
-        function Elements:AddButton(text, callback)
-            local Btn = Instance.new("TextButton", Page)
-            Btn.Size = UDim2.new(1, -10, 0, 30)
-            Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Btn.Text = text
-            Btn.Font = Enum.Font.Gotham
-            Btn.TextSize = 13
-            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Btn.AutoButtonColor = false
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-            
-            Btn.MouseButton1Click:Connect(function()
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
-                task.wait(0.1)
-                TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-                pcall(callback)
-            end)
-        end
-        
-        --== Label ==--
-        function Elements:AddLabel(text)
-            local Label = Instance.new("TextLabel", Page)
-            Label.Size = UDim2.new(1, -10, 0, 26)
-            Label.BackgroundTransparency = 1
-            Label.Text = text
-            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Label.Font = Enum.Font.Gotham
-            Label.TextSize = 12
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-        end
-        
-        --== Dropdown ==--
-        function Elements:AddDropdown(title, list, callback)
-            local Frame = Instance.new("Frame", Page)
-            Frame.Size = UDim2.new(1, -10, 0, 30)
-            Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-            
-            local Btn = Instance.new("TextButton", Frame)
-            Btn.Size = UDim2.new(1, 0, 1, 0)
-            Btn.BackgroundTransparency = 1
-            Btn.Text = title.." ▼"
-            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Btn.Font = Enum.Font.Gotham
-            Btn.TextSize = 13
-            
-            local DropFrame = Instance.new("Frame", Page)
-            DropFrame.Size = UDim2.new(1, -10, 0, 0)
-            DropFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-            DropFrame.Visible = false
-            Instance.new("UICorner", DropFrame).CornerRadius = UDim.new(0, 6)
-            
-            local ListLayout = Instance.new("UIListLayout", DropFrame)
-            ListLayout.Padding = UDim.new(0, 4)
-            
-            for _, opt in ipairs(list) do
-                local OptBtn = Instance.new("TextButton", DropFrame)
-                OptBtn.Size = UDim2.new(1, -10, 0, 25)
-                OptBtn.Position = UDim2.new(0, 5, 0, 5)
-                OptBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-                OptBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                OptBtn.Text = opt
-                OptBtn.Font = Enum.Font.Gotham
-                OptBtn.TextSize = 12
-                Instance.new("UICorner", OptBtn).CornerRadius = UDim.new(0, 6)
-                
-                OptBtn.MouseButton1Click:Connect(function()
-                    pcall(callback, opt)
-                    DropFrame.Visible = false
-                    TweenService:Create(Frame, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-                end)
-            end
-            
-            Btn.MouseButton1Click:Connect(function()
-                DropFrame.Visible = not DropFrame.Visible
-                local size = DropFrame.Visible and #list * 30 or 0
-                TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, size)}):Play()
-            end)
-        end
-        
-        Page.Visible = #TabContent:GetChildren() == 1
-        return Elements
-    end
-    
-    return Tabs
+	local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+	ScreenGui.Name = "GhostUIv3"
+	
+	--== Botão Flutuante ==--
+	local OpenBtn = Instance.new("ImageButton", ScreenGui)
+	OpenBtn.Name = "OpenButton"
+	OpenBtn.Image = "rbxassetid://6031280882"
+	OpenBtn.Size = UDim2.new(0, 45, 0, 45)
+	OpenBtn.Position = UDim2.new(0, 20, 0.8, 0)
+	OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	OpenBtn.BorderSizePixel = 0
+	Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+	makeDraggable(OpenBtn)
+	
+	--== Janela Principal ==--
+	local Main = Instance.new("Frame", ScreenGui)
+	Main.Size = UDim2.new(0, 520, 0, 340)
+	Main.Position = UDim2.new(0.5, -260, 0.5, -170)
+	Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	Main.Visible = false
+	Main.Active = true
+	Main.Draggable = true
+	Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+	
+	local TopBar = Instance.new("Frame", Main)
+	TopBar.Size = UDim2.new(1, 0, 0, 32)
+	TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+	
+	local Title = Instance.new("TextLabel", TopBar)
+	Title.Text = title or "Ghost UI"
+	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.Font = Enum.Font.GothamBold
+	Title.TextSize = 14
+	Title.BackgroundTransparency = 1
+	Title.Position = UDim2.new(0, 10, 0, 0)
+	Title.Size = UDim2.new(1, -20, 1, 0)
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	
+	local TabHolder = Instance.new("Frame", Main)
+	TabHolder.Position = UDim2.new(0, 0, 0, 32)
+	TabHolder.Size = UDim2.new(0, 130, 1, -32)
+	TabHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	
+	local TabContent = Instance.new("Frame", Main)
+	TabContent.Position = UDim2.new(0, 130, 0, 32)
+	TabContent.Size = UDim2.new(1, -130, 1, -32)
+	TabContent.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	
+	local TabList = Instance.new("UIListLayout", TabHolder)
+	TabList.Padding = UDim.new(0, 5)
+	TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	
+	--== Abrir/Fechar ==--
+	local opened = false
+	OpenBtn.MouseButton1Click:Connect(function()
+		opened = not opened
+		TweenService:Create(OpenBtn, TweenInfo.new(0.2), {Rotation = opened and 90 or 0}):Play()
+		Main.Visible = opened
+	end)
+	
+	local Tabs = {}
+	
+	function Tabs:CreateTab(name)
+		local Button = Instance.new("TextButton", TabHolder)
+		Button.Text = name
+		Button.Size = UDim2.new(1, -10, 0, 30)
+		Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Button.Font = Enum.Font.GothamBold
+		Button.TextSize = 13
+		Button.AutoButtonColor = false
+		Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+		
+		local Page = Instance.new("ScrollingFrame", TabContent)
+		Page.Size = UDim2.new(1, -10, 1, -10)
+		Page.Position = UDim2.new(0, 5, 0, 5)
+		Page.BackgroundTransparency = 1
+		Page.Visible = false
+		Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+		Page.ScrollBarThickness = 4
+		
+		local Layout = Instance.new("UIListLayout", Page)
+		Layout.Padding = UDim.new(0, 6)
+		
+		Button.MouseButton1Click:Connect(function()
+			for _, v in pairs(TabContent:GetChildren()) do
+				if v:IsA("ScrollingFrame") then
+					v.Visible = false
+				end
+			end
+			Page.Visible = true
+			TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
+			task.wait(0.1)
+			TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}):Play()
+		end)
+		
+		local Elements = {}
+		
+		--== Botão ==--
+		function Elements:AddButton(text, callback)
+			local Btn = Instance.new("TextButton", Page)
+			Btn.Size = UDim2.new(1, -10, 0, 30)
+			Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			Btn.Text = text
+			Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Btn.Font = Enum.Font.Gotham
+			Btn.TextSize = 13
+			Btn.AutoButtonColor = false
+			Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+			
+			Btn.MouseButton1Click:Connect(function()
+				TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
+				task.wait(0.1)
+				TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+				pcall(callback)
+			end)
+		end
+		
+		--== Toggle ==--
+		function Elements:AddToggle(text, callback)
+			local Toggle = Instance.new("TextButton", Page)
+			Toggle.Size = UDim2.new(1, -10, 0, 30)
+			Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Toggle.Font = Enum.Font.Gotham
+			Toggle.TextSize = 13
+			Toggle.Text = text.." [OFF]"
+			Toggle.AutoButtonColor = false
+			Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
+			
+			local state = false
+			Toggle.MouseButton1Click:Connect(function()
+				state = not state
+				Toggle.Text = text.." ["..(state and "ON" or "OFF").."]"
+				local color = state and Color3.fromRGB(70, 100, 255) or Color3.fromRGB(50, 50, 50)
+				TweenService:Create(Toggle, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+				pcall(callback, state)
+			end)
+		end
+		
+		--== TextBox ==--
+		function Elements:AddTextbox(placeholder, callback)
+			local Box = Instance.new("TextBox", Page)
+			Box.Size = UDim2.new(1, -10, 0, 30)
+			Box.PlaceholderText = placeholder
+			Box.Text = ""
+			Box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+			Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Box.Font = Enum.Font.Gotham
+			Box.TextSize = 12
+			Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 6)
+			Box.FocusLost:Connect(function(enter)
+				if enter then
+					pcall(callback, Box.Text)
+				end
+			end)
+		end
+		
+		--== Section ==--
+		function Elements:AddSection(title)
+			local Section = Instance.new("TextButton", Page)
+			Section.Size = UDim2.new(1, -10, 0, 30)
+			Section.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+			Section.Text = "▼ "..title
+			Section.Font = Enum.Font.GothamBold
+			Section.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Section.TextSize = 13
+			Section.AutoButtonColor = false
+			Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 6)
+			
+			local Content = Instance.new("Frame", Page)
+			Content.Size = UDim2.new(1, -10, 0, 0)
+			Content.BackgroundTransparency = 1
+			Content.Visible = false
+			local layout = Instance.new("UIListLayout", Content)
+			layout.Padding = UDim.new(0, 5)
+			
+			local sectionAPI = {}
+			function sectionAPI:AddButton(...)
+				Elements.AddButton(Content, ...)
+			end
+			
+			Section.MouseButton1Click:Connect(function()
+				Content.Visible = not Content.Visible
+				local size = Content.Visible and 100 or 0
+				TweenService:Create(Content, TweenInfo.new(0.25), {Size = UDim2.new(1, -10, 0, size)}):Play()
+				Section.Text = (Content.Visible and "▲ " or "▼ ")..title
+			end)
+			return sectionAPI
+		end
+		
+		--== Dropdown ==--
+		function Elements:AddDropdown(title, list, callback)
+			local Frame = Instance.new("Frame", Page)
+			Frame.Size = UDim2.new(1, -10, 0, 30)
+			Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+			
+			local Btn = Instance.new("TextButton", Frame)
+			Btn.Size = UDim2.new(1, 0, 1, 0)
+			Btn.BackgroundTransparency = 1
+			Btn.Text = title.." ▼"
+			Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Btn.Font = Enum.Font.Gotham
+			Btn.TextSize = 13
+			
+			local DropFrame = Instance.new("Frame", Page)
+			DropFrame.Size = UDim2.new(1, -10, 0, 0)
+			DropFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+			DropFrame.Visible = false
+			Instance.new("UICorner", DropFrame).CornerRadius = UDim.new(0, 6)
+			
+			local ListLayout = Instance.new("UIListLayout", DropFrame)
+			ListLayout.Padding = UDim.new(0, 4)
+			
+			for _, opt in ipairs(list) do
+				local OptBtn = Instance.new("TextButton", DropFrame)
+				OptBtn.Size = UDim2.new(1, -10, 0, 25)
+				OptBtn.Position = UDim2.new(0, 5, 0, 5)
+				OptBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+				OptBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+				OptBtn.Text = opt
+				OptBtn.Font = Enum.Font.Gotham
+				OptBtn.TextSize = 12
+				Instance.new("UICorner", OptBtn).CornerRadius = UDim.new(0, 6)
+				
+				OptBtn.MouseButton1Click:Connect(function()
+					pcall(callback, opt)
+					DropFrame.Visible = false
+					TweenService:Create(Frame, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+				end)
+			end
+			
+			Btn.MouseButton1Click:Connect(function()
+				DropFrame.Visible = not DropFrame.Visible
+				local size = DropFrame.Visible and #list * 30 or 0
+				TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, size)}):Play()
+			end)
+		end
+		
+		Page.Visible = #TabContent:GetChildren() == 1
+		return Elements
+	end
+	
+	return Tabs
 end
 
 return GhostUI
