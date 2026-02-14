@@ -1,5 +1,5 @@
---== Ghost UI Library v3 ==--
--- Feita por Ghost | Design estilo Redzhubui/BeuttUI refinado --
+--== Ghost UI Library v4 ==--
+-- Criado por Ghost | Estilo Redzhubui/BeuttUI refinado --
 
 local GhostUI = {}
 GhostUI.__index = GhostUI
@@ -7,7 +7,7 @@ GhostUI.__index = GhostUI
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
---== Função de arrastar qualquer objeto ==--
+--== Tornar arrastável ==--
 local function makeDraggable(obj)
 	local dragging, dragInput, dragStart, startPos
 	obj.InputBegan:Connect(function(input)
@@ -37,20 +37,26 @@ end
 
 function GhostUI:CreateWindow(title)
 	local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-	ScreenGui.Name = "GhostUIv3"
-	
-	--== Botão Flutuante ==--
+	ScreenGui.Name = "GhostUIv4"
+
+	--== Botão de abrir arrastável ==--
 	local OpenBtn = Instance.new("ImageButton", ScreenGui)
-	OpenBtn.Name = "OpenButton"
 	OpenBtn.Image = "rbxassetid://6031280882"
-	OpenBtn.Size = UDim2.new(0, 45, 0, 45)
+	OpenBtn.Size = UDim2.new(0, 50, 0, 50)
 	OpenBtn.Position = UDim2.new(0, 20, 0.8, 0)
 	OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	OpenBtn.BorderSizePixel = 0
 	Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
 	makeDraggable(OpenBtn)
-	
-	--== Janela Principal ==--
+
+	--== Animação de clique botão abrir ==--
+	local function clickAnim(btn)
+		TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(0, 45, 0, 45)}):Play()
+		task.wait(0.1)
+		TweenService:Create(btn, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50)}):Play()
+	end
+
+	--== Janela principal ==--
 	local Main = Instance.new("Frame", ScreenGui)
 	Main.Size = UDim2.new(0, 520, 0, 340)
 	Main.Position = UDim2.new(0.5, -260, 0.5, -170)
@@ -59,12 +65,12 @@ function GhostUI:CreateWindow(title)
 	Main.Active = true
 	Main.Draggable = true
 	Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-	
+
 	local TopBar = Instance.new("Frame", Main)
 	TopBar.Size = UDim2.new(1, 0, 0, 32)
 	TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
-	
+
 	local Title = Instance.new("TextLabel", TopBar)
 	Title.Text = title or "Ghost UI"
 	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -74,31 +80,30 @@ function GhostUI:CreateWindow(title)
 	Title.Position = UDim2.new(0, 10, 0, 0)
 	Title.Size = UDim2.new(1, -20, 1, 0)
 	Title.TextXAlignment = Enum.TextXAlignment.Left
-	
+
 	local TabHolder = Instance.new("Frame", Main)
 	TabHolder.Position = UDim2.new(0, 0, 0, 32)
 	TabHolder.Size = UDim2.new(0, 130, 1, -32)
 	TabHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	
+
 	local TabContent = Instance.new("Frame", Main)
 	TabContent.Position = UDim2.new(0, 130, 0, 32)
 	TabContent.Size = UDim2.new(1, -130, 1, -32)
 	TabContent.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-	
+
 	local TabList = Instance.new("UIListLayout", TabHolder)
 	TabList.Padding = UDim.new(0, 5)
 	TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	
-	--== Abrir/Fechar ==--
+
 	local opened = false
 	OpenBtn.MouseButton1Click:Connect(function()
+		clickAnim(OpenBtn)
 		opened = not opened
-		TweenService:Create(OpenBtn, TweenInfo.new(0.2), {Rotation = opened and 90 or 0}):Play()
 		Main.Visible = opened
 	end)
-	
+
 	local Tabs = {}
-	
+
 	function Tabs:CreateTab(name)
 		local Button = Instance.new("TextButton", TabHolder)
 		Button.Text = name
@@ -109,7 +114,7 @@ function GhostUI:CreateWindow(title)
 		Button.TextSize = 13
 		Button.AutoButtonColor = false
 		Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
-		
+
 		local Page = Instance.new("ScrollingFrame", TabContent)
 		Page.Size = UDim2.new(1, -10, 1, -10)
 		Page.Position = UDim2.new(0, 5, 0, 5)
@@ -117,10 +122,10 @@ function GhostUI:CreateWindow(title)
 		Page.Visible = false
 		Page.CanvasSize = UDim2.new(0, 0, 0, 0)
 		Page.ScrollBarThickness = 4
-		
+
 		local Layout = Instance.new("UIListLayout", Page)
 		Layout.Padding = UDim.new(0, 6)
-		
+
 		Button.MouseButton1Click:Connect(function()
 			for _, v in pairs(TabContent:GetChildren()) do
 				if v:IsA("ScrollingFrame") then
@@ -128,13 +133,11 @@ function GhostUI:CreateWindow(title)
 				end
 			end
 			Page.Visible = true
-			TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
-			task.wait(0.1)
-			TweenService:Create(Button, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)}):Play()
+			clickAnim(Button)
 		end)
-		
+
 		local Elements = {}
-		
+
 		--== Botão ==--
 		function Elements:AddButton(text, callback)
 			local Btn = Instance.new("TextButton", Page)
@@ -146,15 +149,13 @@ function GhostUI:CreateWindow(title)
 			Btn.TextSize = 13
 			Btn.AutoButtonColor = false
 			Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-			
+
 			Btn.MouseButton1Click:Connect(function()
-				TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
-				task.wait(0.1)
-				TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+				clickAnim(Btn)
 				pcall(callback)
 			end)
 		end
-		
+
 		--== Toggle ==--
 		function Elements:AddToggle(text, callback)
 			local Toggle = Instance.new("TextButton", Page)
@@ -166,17 +167,18 @@ function GhostUI:CreateWindow(title)
 			Toggle.Text = text.." [OFF]"
 			Toggle.AutoButtonColor = false
 			Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0, 6)
-			
+
 			local state = false
 			Toggle.MouseButton1Click:Connect(function()
 				state = not state
 				Toggle.Text = text.." ["..(state and "ON" or "OFF").."]"
-				local color = state and Color3.fromRGB(70, 100, 255) or Color3.fromRGB(50, 50, 50)
-				TweenService:Create(Toggle, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+				local color = state and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(50, 50, 50)
+				TweenService:Create(Toggle, TweenInfo.new(0.25), {BackgroundColor3 = color}):Play()
+				clickAnim(Toggle)
 				pcall(callback, state)
 			end)
 		end
-		
+
 		--== TextBox ==--
 		function Elements:AddTextbox(placeholder, callback)
 			local Box = Instance.new("TextBox", Page)
@@ -194,8 +196,8 @@ function GhostUI:CreateWindow(title)
 				end
 			end)
 		end
-		
-		--== Section ==--
+
+		--== Section (colapsável) ==--
 		function Elements:AddSection(title)
 			local Section = Instance.new("TextButton", Page)
 			Section.Size = UDim2.new(1, -10, 0, 30)
@@ -206,35 +208,30 @@ function GhostUI:CreateWindow(title)
 			Section.TextSize = 13
 			Section.AutoButtonColor = false
 			Instance.new("UICorner", Section).CornerRadius = UDim.new(0, 6)
-			
+
 			local Content = Instance.new("Frame", Page)
 			Content.Size = UDim2.new(1, -10, 0, 0)
 			Content.BackgroundTransparency = 1
 			Content.Visible = false
 			local layout = Instance.new("UIListLayout", Content)
 			layout.Padding = UDim.new(0, 5)
-			
-			local sectionAPI = {}
-			function sectionAPI:AddButton(...)
-				Elements.AddButton(Content, ...)
-			end
-			
+
 			Section.MouseButton1Click:Connect(function()
 				Content.Visible = not Content.Visible
-				local size = Content.Visible and 100 or 0
+				local size = Content.Visible and 120 or 0
 				TweenService:Create(Content, TweenInfo.new(0.25), {Size = UDim2.new(1, -10, 0, size)}):Play()
 				Section.Text = (Content.Visible and "▲ " or "▼ ")..title
+				clickAnim(Section)
 			end)
-			return sectionAPI
 		end
-		
+
 		--== Dropdown ==--
 		function Elements:AddDropdown(title, list, callback)
 			local Frame = Instance.new("Frame", Page)
 			Frame.Size = UDim2.new(1, -10, 0, 30)
 			Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 			Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-			
+
 			local Btn = Instance.new("TextButton", Frame)
 			Btn.Size = UDim2.new(1, 0, 1, 0)
 			Btn.BackgroundTransparency = 1
@@ -242,16 +239,16 @@ function GhostUI:CreateWindow(title)
 			Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 			Btn.Font = Enum.Font.Gotham
 			Btn.TextSize = 13
-			
+
 			local DropFrame = Instance.new("Frame", Page)
 			DropFrame.Size = UDim2.new(1, -10, 0, 0)
 			DropFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 			DropFrame.Visible = false
 			Instance.new("UICorner", DropFrame).CornerRadius = UDim.new(0, 6)
-			
+
 			local ListLayout = Instance.new("UIListLayout", DropFrame)
 			ListLayout.Padding = UDim.new(0, 4)
-			
+
 			for _, opt in ipairs(list) do
 				local OptBtn = Instance.new("TextButton", DropFrame)
 				OptBtn.Size = UDim2.new(1, -10, 0, 25)
@@ -262,25 +259,26 @@ function GhostUI:CreateWindow(title)
 				OptBtn.Font = Enum.Font.Gotham
 				OptBtn.TextSize = 12
 				Instance.new("UICorner", OptBtn).CornerRadius = UDim.new(0, 6)
-				
+
 				OptBtn.MouseButton1Click:Connect(function()
 					pcall(callback, opt)
 					DropFrame.Visible = false
-					TweenService:Create(Frame, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+					clickAnim(OptBtn)
 				end)
 			end
-			
+
 			Btn.MouseButton1Click:Connect(function()
 				DropFrame.Visible = not DropFrame.Visible
 				local size = DropFrame.Visible and #list * 30 or 0
 				TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, size)}):Play()
+				clickAnim(Btn)
 			end)
 		end
-		
+
 		Page.Visible = #TabContent:GetChildren() == 1
 		return Elements
 	end
-	
+
 	return Tabs
 end
 
